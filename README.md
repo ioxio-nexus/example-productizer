@@ -18,7 +18,9 @@ The API serves its own docs, if running as instructed above, can be found at `ht
 OpenAPI 3.0 spec can be found at `http://localhost:8080/openapi.json` (replace `localhost` with value from `minikube ip`
 if running Docker in Minikube).
 
-For simplicity's sake these are also hosted in the `gh-pages` branch of this repository. 
+For simplicity's sake these are also hosted in the `gh-pages` branch of this repository and can be
+viewed at [https://digitalliving.github.io/ihan-productizer-example/](https://digitalliving.github.io/ihan-productizer-example/).
+
 
 ## License
 

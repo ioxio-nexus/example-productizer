@@ -1,6 +1,6 @@
 # IHAN Productizer example
 
-Implementation of a basic IHAN Productizer for the OpenWeatherMap API using Python (PyPy) and FastAPI.
+Implementation of a basic IHAN Productizer for the OpenWeatherMap API using Python and FastAPI.
 Serves as an example of how to implement a working Productizer.
 
 ## Running

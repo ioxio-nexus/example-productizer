@@ -1,10 +1,15 @@
-# OpenWeatherMap.org API key
-API_KEY = ""
+from pydantic import BaseSettings, HttpUrl, SecretStr
 
-# API endpoint to use
-API_ENDPOINT = "https://api.openweathermap.org/data/2.5/weather"
 
-try:
-    from settings_local import *
-except ImportError:
-    pass
+class Settings(BaseSettings):
+    # OpenWeatherMap.org API key
+    API_KEY: SecretStr = ""
+
+    # API endpoint to use
+    API_ENDPOINT: HttpUrl = "https://api.openweathermap.org/data/2.5/weather"
+
+    class Config:
+        env_file = ".env"
+
+
+conf = Settings()

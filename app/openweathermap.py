@@ -6,7 +6,7 @@ import orjson
 from settings import conf
 
 
-async def current_weather(lat: float, lon: float) -> Dict[str, Any]:
+async def get_current_weather(lat: float, lon: float) -> Dict[str, Any]:
     async with aiohttp.ClientSession() as client:
         opts = {
             "params": {

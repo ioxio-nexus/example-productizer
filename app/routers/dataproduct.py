@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from app.models import CurrentWeatherMetricRequest, CurrentWeatherMetricResponse
-from app.openweathermap import current_weather
+from app.openweathermap import get_current_weather
 from app.utils import logger
 
 router = APIRouter()
@@ -15,7 +15,7 @@ router = APIRouter()
 )
 async def weather_current_metric(params: CurrentWeatherMetricRequest):
 
-    result = await current_weather(params.lat, params.lon)
+    result = await get_current_weather(params.lat, params.lon)
 
     logger.info("Weather for %.2f, %.2f: %s", params.lat, params.lon, result)
 

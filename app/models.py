@@ -8,6 +8,10 @@ class CamelCaseModel(BaseModel):
         allow_population_by_field_name = True
 
 
+class HealthResponse(CamelCaseModel):
+    status: bool
+
+
 class CurrentWeatherMetricRequest(CamelCaseModel):
     lat: float = Field(
         ...,

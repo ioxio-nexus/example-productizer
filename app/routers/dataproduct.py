@@ -8,8 +8,8 @@ router = APIRouter()
 
 
 @router.post(
-    "/Weather/Current/Metric",
-    summary="Weather/Current/Metric Data Product",
+    "/draft/Weather/Current/Metric",
+    summary="draft/Weather/Current/Metric Data Product",
     description="Current weather in metric units",
     response_model=CurrentWeatherMetricResponse,
 )

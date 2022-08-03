@@ -7,4 +7,12 @@ module.exports = {
   singleQuote: false,
   endOfLine: "lf",
   proseWrap: "always",
+  overrides: [
+    {
+      files: "*.yaml",
+      options: {
+        proseWrap: "preserve",
+      },
+    },
+  ],
 }

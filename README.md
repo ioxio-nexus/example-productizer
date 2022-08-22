@@ -23,3 +23,15 @@ The API serves its own docs, if running as instructed above, can be found at
 
 This code is released under the BSD 3-Clause license. Details in the
 [LICENSE.md](./LICENSE.md) file.
+
+
+## Guides and help
+
+[Written guide for how to build a data source](https://ioxio.com/guides/how-to-build-a-data-source)
+
+You can also check out our YouTube tutorial:
+
+[![Defining Data Products for the IOXIO® Dataspace technology
+](https://img.youtube.com/vi/f-f6P_-8zoQ/0.jpg)](http://www.youtube.com/watch?v=f-f6P_-8zoQ)
+
+Also join our [IOXIO Community Slack](https://slack.ioxio.com/)

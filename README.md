@@ -24,7 +24,6 @@ The API serves its own docs, if running as instructed above, can be found at
 This code is released under the BSD 3-Clause license. Details in the
 [LICENSE.md](./LICENSE.md) file.
 
-
 ## Guides and help
 
 [Written guide for how to build a data source](https://ioxio.com/guides/how-to-build-a-data-source)

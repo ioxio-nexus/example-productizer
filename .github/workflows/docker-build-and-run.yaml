@@ -1,0 +1,41 @@
+name: Build and Run Docker Image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Build Docker Image
+        run: docker build -t owm-productizer .
+
+      - name: Run Docker Container
+        run: docker run -p 8000:8000 --rm -it owm-productizer
+
+      - name: Wait for Container to Start
+        run: sleep 10
+
+      - name: Test API
+        run: |
+          response=$(curl -s -w "%{http_code}" http://localhost:8000/Weather/Current/Metric_v1.0 -d '{"lat":60.192059, "lon":24.945831}')
+          echo "API Response: $response"
+          if [[ $response -ne 200 ]]; then
+              echo "API test failed. HTTP status code is not 200."
+              exit 1
+          fi
+
+          # Check if the response structure is as expected
+          if [[ "$response" != *"humidity"* || "$response" != *"pressure"* || "$response" != *"rain"* || "$response" != *"temp"* || "$response" != *"windSpeed"* || "$response" != *"windDirection"* ]]; then
+            echo "API test failed. Response structure is not as expected."
+            exit 1
+          fi
+
+      - name: Stop and Remove Docker Container
+        run: docker stop owm-productizer && docker rm owm-productizer

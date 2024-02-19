@@ -14,7 +14,6 @@ Generic pre-requisites for development
 - [Pre-commit](https://pre-commit.com/#install)
 - [Python 3.11+](https://www.python.org/downloads/)
 - [Poetry](https://python-poetry.org/docs/#installation)
-- [Docker](https://docs.docker.com/install/)
 
 To set up the `pre-commit` hooks, run `pre-commit install` in the repo. After it you can
 manually run `pre-commit` only for your changes or `pre-commit run --all-files` for all

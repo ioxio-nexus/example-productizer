@@ -31,23 +31,30 @@ jobs:
 
       - name: Test API
         run: |
-          response=$(curl -s -w "%{http_code}" -H 'Content-Type: application/json' http://localhost:8000/Weather/Current/Metric_v1.0 -d '{"lat":60.192059, "lon":24.945831}')
-          echo "API Response: $response"
+          response=$(curl -i -H 'Content-Type: application/json' http://localhost:8000/Weather/Current/Metric_v1.0 -d '{"lat":60.192059, "lon":24.945831}')
+          
+          status_code=$(echo "$response" | head -n 1 | awk '{print $2}')
 
-          status_code=$(echo "$response" | sed 's/.*\([0-9]\{3\}\)$/\1/')
-          json_resp=$(echo "$response" | sed 's/\([0-9]\{3\}\)$//')
+          # Extract JSON
+          json_content=$(echo "$response" | tail -n +6)
+
+          # Parse JSON
+          json_resp=$(echo "$json_content" | jq '.')
 
           if [[ $status_code -ne 200 ]]; then
               echo "API test failed. HTTP status code is not 200."
               exit 1
           fi
 
-          # Check if the response is a valid JSON using jq
-          if echo "$json_resp" | jq -e . > /dev/null 2>&1; then
-            echo "API test passed. Response structure is a valid JSON."
-          else
+          # Check if the response is not a valid JSON using jq
+          if ! echo "$json_resp" | jq -e . > /dev/null 2>&1; then
             echo "API test failed. Response structure is not a valid JSON."
             exit 1
+          fi
+
+          if ! echo "$json_resp" | jq 'has("humidity") and has("pressure") and has ("rain") and has ("temp") and has ("windSpeed") and has ("windDirection") ' | grep -q true; then
+              echo "Error: Required fields not found in the JSON response."
+              exit 1
           fi
 
       - name: Stop and Remove Docker Container

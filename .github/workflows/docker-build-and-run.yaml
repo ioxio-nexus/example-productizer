@@ -41,6 +41,7 @@ jobs:
           # Parse JSON
           json_resp=$(echo "$json_content" | jq '.')
 
+          # Check request status code
           if [[ $status_code -ne 200 ]]; then
               echo "API test failed. HTTP status code is not 200."
               exit 1
@@ -51,7 +52,8 @@ jobs:
             echo "API test failed. Response structure is not a valid JSON."
             exit 1
           fi
-
+          
+          # Check if the response fields are present
           if ! echo "$json_resp" | jq 'has("humidity") and has("pressure") and has ("rain") and has ("temp") and has ("windSpeed") and has ("windDirection") ' | grep -q true; then
               echo "Error: Required fields not found in the JSON response."
               exit 1

@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    types: [opened, synchronize, edited]
 
 jobs:
   build-and-run:
@@ -35,11 +37,8 @@ jobs:
 
           status_code=$(echo "$response" | head -n 1 | awk '{print $2}')
 
-          # Extract JSON
-          json_content=$(echo "$response" | tail -n +6)
-
-          # Parse JSON
-          json_resp=$(echo "$json_content" | jq '.')
+          # Extra JSON response
+          json_resp=$(echo "$response" | awk -v RS= '{last=$0} END{print last}'  | awk '/^\s*{/,/^}$/' | jq .)
 
           # Check request status code
           if [[ $status_code -ne 200 ]]; then

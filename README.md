@@ -50,14 +50,6 @@ docker run -p 8000:8000 --rm -it owm-productizer
 curl -X POST -H "Content-Type: application/json" -d '{"lat":60.192059, "lon":24.945831}' http://localhost:8000/Weather/Current/Metric_v1.0
 ```
 
-## Testing
-
-To run the tests:
-
-```bash
-poetry run invoke test
-```
-
 ## Docs
 
 The API serves its own docs, if running as instructed above, can be found at

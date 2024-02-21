@@ -26,7 +26,7 @@ jobs:
         run: docker build -t example-productizer .
 
       - name: Run Docker Container
-        run: docker run -p 8000:8000 -d example-productizer
+        run: docker run -p 8000:8000 --rm -d example-productizer
 
       - name: Wait for Container to Start
         run: sleep 10
@@ -57,6 +57,3 @@ jobs:
               echo "Error: Required fields not found in the JSON response."
               exit 1
           fi
-
-      - name: Stop and Remove Docker Container
-        run: docker stop example-productizer && docker rm example-productizer

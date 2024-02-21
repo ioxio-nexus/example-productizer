@@ -40,8 +40,8 @@ poetry run invoke dev
 Make sure [Docker](https://docs.docker.com/install/) is installed.
 
 ```shell
-docker build -t owm-productizer .
-docker run -p 8000:8000 --rm -it owm-productizer
+docker build -t example-productizer .
+docker run -p 8000:8000 --rm -it example-productizer
 ```
 
 ## Example API query

@@ -9,7 +9,7 @@ RUN bash /src/docker/build-prepare.sh
 
 ADD pyproject.toml poetry.lock ./
 ADD docker/build-setup.sh /src/docker/build-setup.sh
-RUN --mount=type=cache,target=/home/${USER}/.cache bash /src/docker/build-setup.sh
+RUN --mount=type=cache,uid=1000,gid=1000,target=/home/${USER}/.cache bash /src/docker/build-setup.sh
 
 
 # ---- RUNTIME ENVIRONMENT ----- #

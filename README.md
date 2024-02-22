@@ -4,8 +4,8 @@
 [![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/ioxio-dataspace/example-productizer/blob/main/.pre-commit-config.yaml)
 [![image](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-Implementation of a basic Productizer for the OpenWeatherMap API using Python and
-FastAPI. Serves as an example of how to implement a working Productizer.
+Implementation of a basic Productizer for random weather data using Python and FastAPI.
+Serves as an example of how to implement a working Productizer.
 
 ## Development
 

@@ -15,7 +15,7 @@ def get_weather_for_coords(lat: float, lon: float):
         "pressure": random.uniform(870, 1083.8),  # nosec
         "humidity": humidity,
         "wind_speed": random.uniform(0, 100),  # nosec
-        "wind_direction": random.uniform(0, 360),  # nosec
+        "wind_direction": (random.uniform(0, 360) + lat + lon) % 360,  # nosec
     }
 
 

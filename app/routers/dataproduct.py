@@ -1,7 +1,8 @@
+import random
+
 from fastapi import APIRouter
 
 from app.models import CurrentWeatherMetricRequest, CurrentWeatherMetricResponse
-import random
 
 router = APIRouter()
 

@@ -36,7 +36,7 @@ repos:
         name: ruff sort imports
         args: ["--select", "I", "--fix"]
       - id: ruff-format
-        name: ruff forma
+        name: ruff format
   - repo: https://github.com/PyCQA/bandit
     rev: 1.7.7
     hooks:

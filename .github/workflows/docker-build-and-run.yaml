@@ -37,7 +37,7 @@ jobs:
 
           status_code=$(echo "$response" | head -n 1 | awk '{print $2}')
 
-          # Extra JSON response
+          # Extract JSON response
           json_resp=$(echo "$response" | awk -v RS= '{last=$0} END{print last}'  | awk '/^\s*{/,/^}$/' | jq .)
 
           # Check request status code

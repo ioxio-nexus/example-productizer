@@ -24,7 +24,7 @@ def get_weather_for_coords(lat: float, lon: float):
     "/Weather/Current/Metric_v1.0",
     summary="Current weather in a given location",
     description="Common data points about the current weather with metric units in a "
-                "given location. Simplified for example use,and not following industry standards.",
+                "given location. Simplified for example use, and not following industry standards.",
     response_model=CurrentWeatherMetricResponse,
 )
 async def weather_current_metric(params: CurrentWeatherMetricRequest):

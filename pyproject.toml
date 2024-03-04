@@ -1,25 +1,22 @@
 [tool.poetry]
-name = "openweathermap-productizer-v1"
+name = "ioxio-dataspace-example-productizer"
 version = "1.0.0"
 description = ""
-authors = ["Digital Living International Ltd"]
+authors = ["IOXIO Oy"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
-fastapi = "^0.80.0"
-uvicorn = "^0.18.2"
-aiohttp = "^3.8.1"
-invoke = "^1.7.1"
-orjson = "^3.7.12"
-stringcase = "^1.2.0"
-pydantic = {version = "^1.9.2", extras = ["dotenv"]}
-
-[tool.poetry.dev-dependencies]
+python = "^3.11"
+fastapi = "^0.110.0"
+uvicorn = "^0.27.1"
+invoke = "^2.2.0"
+pydantic = "^2.6.3"
 
 [tool.skjold]
 report_only = false
 sources = ["pyup", "gemnasium"]
 
+[tool.poetry.dev-dependencies]
+
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry>=1.0.0"]
+build-backend = "poetry.masonry.api"

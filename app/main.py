@@ -1,14 +1,11 @@
 from fastapi import FastAPI
-from fastapi.responses import ORJSONResponse
 
-from app.routers import dataproduct, health
+from app.routers import dataproduct
 
 app = FastAPI(
     title="Productizer",
-    description="Productizer for the OpenWeatherMap API",
+    description="Productizer for the Weather/Current/Metric_v1.0 Data Product",
     version="1.0.0",
-    default_response_class=ORJSONResponse,
 )
 
-app.include_router(health.router)
 app.include_router(dataproduct.router)

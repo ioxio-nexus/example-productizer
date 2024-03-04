@@ -5,12 +5,6 @@ from invoke import task
 
 
 @task
-def test(ctx):
-    """Run the tests."""
-    ctx.run("python -m pytest")
-
-
-@task
 def dev(ctx, port=8000):
     """Runs the API locally on given port.
 

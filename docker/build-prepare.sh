@@ -16,4 +16,4 @@ set -exuo pipefail
 apt-get update
 apt-get install -y --no-install-recommends \
   build-essential \
-  python3.10-dev \
+  python3.11-dev \

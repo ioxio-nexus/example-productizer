@@ -58,7 +58,12 @@ class JWKResult:
 
 @dataclass
 class JWKSResult:
-    # TODO: Link to JWKS file documentation
+    """
+    Container for a jwks.json -file's contents
+
+    https://stytch.com/blog/understanding-jwks/
+    """
+
     keys: list[JWKResult]
 
 

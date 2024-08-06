@@ -220,7 +220,7 @@ async def validate_api_token(api_token: str, definition_path: str, source: str):
 
     # This verifies signature and expiration time, then returns the payload
     jwt_payload = jwt.decode(
-        jwt=api_token, leeway=API_TOKEN_LEEWAY, key=jwk, algorithms=["RS256"]
+        jwt=api_token, leeway=API_TOKEN_LEEWAY, key=jwk.key, algorithms=["RS256"]
     )
     api_token = APIToken(**jwt_payload)
 

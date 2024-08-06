@@ -2,11 +2,21 @@ from dataclasses import dataclass
 from typing import Optional
 
 import jwt
+from async_lru import alru_cache
 from jwt import PyJWK
 from yarl import URL
 
 from app.utils import get_json, logger
 from settings import API_TOKEN_LEEWAY, VALID_DATASPACES
+
+# Some reasonable defaults for cache lifetimes for different stages of signature validation
+#
+# For production uses it would be a good idea to periodically fetch the JWKS file instead to avoid
+# delays when data is being requested.
+
+JWK_CACHE_TTL = 15 * 60  # Cache individual JWK for 15min
+JWKS_CACHE_TTL = 60 * 60  # Cache entire JWKS file for 1 hour
+JWKS_URL_CACHE_TTL = 24 * 60 * 60  # Cache determining JWKS URL for 24 hours
 
 
 @dataclass
@@ -14,39 +24,48 @@ class DataspaceConfiguration:
     # https://docs.ioxio.dev/schemas/dataspace-configuration/
     # There are plenty of other props which we don't care about
 
-    dataspace_base_domain: str
-    product_gateway_url: str
-    definition_viewer_url: str
-    developer_portal_url: str
-    docs_url: str
-    dataspace_name: str
     authentication_providers: dict
     consent_providers: list[dict]
+    dataspace_base_domain: str
+    dataspace_name: str
+    definition_viewer_url: str
     definitions: dict
-
-    # TODO: jwks_url
-    jwks_uri: str
+    developer_portal_url: str
+    docs_url: str
+    jwks_uri: str  # TODO: This will be renamed _url
+    product_gateway_url: str
 
 
 @dataclass
 class JWKResult:
+    """
+    A container for a single JSON Web Key
+
+    https://datatracker.ietf.org/doc/html/rfc7517
+    """
+
     alg: str
     e: str
     kid: str
     kty: str
     n: str
     use: str
+    key_opts: Optional[list[str]] = None
     x5c: Optional[str] = None
     x5t: Optional[str] = None
+    x5u: Optional[str] = None
+    # x5t#S256 is an option, but it's not trivial to support here so leaving it out for now
 
 
 @dataclass
 class JWKSResult:
+    # TODO: Link to JWKS file documentation
     keys: list[JWKResult]
 
 
 @dataclass
 class APIToken:
+    # TODO: Link to IOXIO docs describing the token format
     iss: str  # Issuer base domain
     sub: str  # Group or app identification
     dsi: str  # Data source identifier for which this API token is valid
@@ -54,7 +73,7 @@ class APIToken:
     iat: int  # Issued at (unix timestamp)
 
 
-# TODO: lru + higher expire
+@alru_cache(maxsize=16, ttl=JWKS_URL_CACHE_TTL)
 async def determine_jwks_url(iss: str) -> str:
     """
     Fetch the issuer's dataspace configuration and determine the JWKS URL. We only support HTTPS schemes, which
@@ -74,14 +93,14 @@ async def determine_jwks_url(iss: str) -> str:
         )
     )
 
-    logger.debug(f"Fetching dataspace configuration from {dataspace_configuration_url}")
+    logger.info(f"Fetching dataspace configuration from {dataspace_configuration_url}")
     result = await get_json(dataspace_configuration_url)
 
     dataspace_configuration = DataspaceConfiguration(**result)
     return dataspace_configuration.jwks_uri
 
 
-# TODO: lru + expire
+@alru_cache(maxsize=16, ttl=JWKS_CACHE_TTL)
 async def fetch_jwks(iss: str) -> (str, list[JWKResult]):
     """
     Figure out the issuer's JWKS URL and fetch the JWKS -hosted keys.
@@ -93,7 +112,7 @@ async def fetch_jwks(iss: str) -> (str, list[JWKResult]):
 
     jwks_url = await determine_jwks_url(iss)
 
-    logger.debug(f"Fetching JWKS from {jwks_url}")
+    logger.info(f"Fetching JWKS from {jwks_url}")
     result = await get_json(jwks_url)
 
     jwks = JWKSResult(keys=[JWKResult(**key) for key in result["keys"]])
@@ -101,8 +120,8 @@ async def fetch_jwks(iss: str) -> (str, list[JWKResult]):
     return jwks_url, jwks.keys
 
 
-# TODO: lru + expire
-async def fetch_jwk(iss: str, kid: str) -> (str, JWKResult):
+@alru_cache(maxsize=16, ttl=JWK_CACHE_TTL)
+async def fetch_jwk(iss: str, kid: str) -> (str, PyJWK):
     """
     Fetch the JWK key 'kid' from the issuer's published JWKS. We also require it to be of type RSA, used for signing,
     and using RS256 algorithm.
@@ -119,7 +138,7 @@ async def fetch_jwk(iss: str, kid: str) -> (str, JWKResult):
             and jwk.alg == "RS256"
             and jwk.kid == kid
         ):
-            return jwks_url, jwk
+            return jwks_url, PyJWK(jwk.__dict__)
 
     raise Exception(
         f"{jwks_url} does not contain a JWK with the ID {kid}, with kty RSA, use sig, and alg RS256. "
@@ -216,17 +235,19 @@ async def validate_api_token(api_token: str, definition_path: str, source: str):
 
     # Figure out the JWK that signed this token
     jwks_url, expected_signing_jwk = await fetch_jwk(dataspace_base_domain, kid)
-    jwk = PyJWK(expected_signing_jwk.__dict__)
 
     # This verifies signature and expiration time, then returns the payload
     jwt_payload = jwt.decode(
-        jwt=api_token, leeway=API_TOKEN_LEEWAY, key=jwk.key, algorithms=["RS256"]
+        jwt=api_token,
+        leeway=API_TOKEN_LEEWAY,
+        key=expected_signing_jwk.key,
+        algorithms=["RS256"],
     )
     api_token = APIToken(**jwt_payload)
 
     if api_token.dsi != expected_dsi:
         raise Exception(f"Expected DSI {expected_dsi}, got {api_token.dsi}")
 
-    logger.debug(
+    logger.info(
         f"{api_token.sub} from {iss} accessing {api_token.dsi} with a valid API Token"
     )

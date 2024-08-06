@@ -30,4 +30,4 @@ async def verify_api_token(
         return
 
     token = await validate_api_token(x_api_key, request.url.path, source)
-    logger.debug("Received valid API token", token=token)
+    logger.info("Received valid API token", token=token)

@@ -85,7 +85,7 @@ async def determine_jwks_url(iss: str) -> str:
 
     :param iss: The base domain of the issuer
     :return: The JWKS URL from the dataspace configuration
-    :raises HTTPStatusError: If the response from the server is not a successful one
+    :raises httpx.HTTPError: If the response from the server is not a successful one
     """
 
     # This file's format is documented at https://docs.ioxio.dev/schemas/dataspace-configuration/
@@ -111,7 +111,7 @@ async def fetch_jwks(iss: str) -> (str, list[JWKResult]):
 
     :param iss: The base domain of the issuer
     :return: The JWKS URL from the dataspace configuration, and the keys hosted via JWKS
-    :raises HTTPStatusError: If the response from the server is not a successful one
+    :raises httpx.HTTPError: If the response from the server is not a successful one
     """
 
     jwks_url = await determine_jwks_url(iss)
@@ -133,7 +133,7 @@ async def fetch_jwk(iss: str, kid: str) -> (str, PyJWK):
     :param iss: Base domain of issuer, e.g. ioxio.com
     :param kid: Key ID in the JWKS, e.g. 302feac8851574f3ef74ec1c62a7489f
     :return: The JWKS URL the key was fetched from, as well as a PyJWK instance for the key
-    :raises HTTPStatusError: If the response from the server is not a successful one
+    :raises httpx.HTTPError: If the response from the server is not a successful one
     :raises Exception: If the key was not found
     """
     jwks_url, jwks = await fetch_jwks(iss)
@@ -221,7 +221,7 @@ async def validate_api_token(api_token: str, definition_path: str, source: str):
     :param source: The "source" is expected as a query parameter ?source=example
     :raises Exception: If validation fails in general, e.g. requests time out
     :raises pyjwt.JWTError: If there are issues with the JWT token itself
-    :raises HTTPStatusError: If the HTTP responses during JWKS resolution are not successful
+    :raises httpx.HTTPError: If the HTTP responses during JWKS resolution are not successful
     """
 
     # Parse the key ID and issuer from the API token needed to verify the signature

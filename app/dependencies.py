@@ -3,7 +3,6 @@ from typing import Optional
 from fastapi import Header, Request
 
 from app.api_tokens import validate_api_token
-from app.utils import logger
 
 
 async def verify_api_token(
@@ -29,5 +28,5 @@ async def verify_api_token(
     if x_api_key is None:
         return
 
-    token = await validate_api_token(x_api_key, request.url.path, source)
-    logger.info("Received valid API token", token=token)
+    # This will throw an exception and not process the request further if validation fails
+    await validate_api_token(x_api_key, request.url.path, source)

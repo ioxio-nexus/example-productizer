@@ -22,7 +22,6 @@ JWKS_URL_CACHE_TTL = 24 * 60 * 60  # Cache determining JWKS URL for 24 hours
 @dataclass
 class DataspaceConfiguration:
     # https://docs.ioxio.dev/schemas/dataspace-configuration/
-    # There are plenty of other props which we don't care about
 
     authentication_providers: dict
     consent_providers: list[dict]

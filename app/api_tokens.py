@@ -146,6 +146,9 @@ async def fetch_jwk(iss: str, kid: str) -> (str, PyJWK):
         ):
             return jwks_url, PyJWK(jwk.__dict__)
 
+    # For proper durable operation, in case the JWKS content was fetched from cache and key was not found, we should
+    # try to re-fetch fresh JWKS in case it is a newly added key.
+
     raise Exception(
         f"{jwks_url} does not contain a JWK with the ID {kid}, with kty RSA, use sig, and alg RS256. "
         f"Cannot verify API token."

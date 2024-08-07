@@ -2,12 +2,7 @@ from os import environ
 
 import uvicorn
 from invoke import task
-
-
-@task
-def test(ctx):
-    """Run the tests."""
-    ctx.run("python -m pytest")
+from uvicorn.supervisors import ChangeReload
 
 
 @task
@@ -17,8 +12,20 @@ def dev(ctx, port=8000):
     :param invoke.Context ctx: The invoke context.
     :param int port: The port to run the API on, defaults to 8000.
     """
+    host = "0.0.0.0"  # nosec, it's not a mistake
     port = environ.get("PORT", port)
-    ctx.run(f"uvicorn app.main:app --host 0.0.0.0 --port {port} --reload")
+
+    config = uvicorn.Config(
+        app="app.main:app",
+        host=host,
+        port=int(port),
+        reload=True,
+        log_level="debug",
+    )
+    server = uvicorn.Server(config)
+
+    supervisor = ChangeReload(config, target=server.run, sockets=[config.bind_socket()])
+    supervisor.run()
 
 
 @task

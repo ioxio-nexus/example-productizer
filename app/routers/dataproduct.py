@@ -1,34 +1,34 @@
-from fastapi import APIRouter
+import random
 
+from fastapi import APIRouter, Depends
+
+from app.dependencies import verify_api_token
 from app.models import CurrentWeatherMetricRequest, CurrentWeatherMetricResponse
-from app.openweathermap import get_current_weather
-from app.utils import logger
 
-router = APIRouter()
+# All APIs under this router verify any sent API tokens
+router = APIRouter(dependencies=[Depends(verify_api_token)])
+
+
+def get_weather_for_coords(lat: float, lon: float):
+    _ = lat, lon
+    humidity = min(random.uniform(0, 125), 100)  # nosec
+    rain = humidity >= 99
+    return {
+        "rain": rain,
+        "temp": random.uniform(-30, 40),  # nosec
+        "pressure": random.uniform(870, 1083.8),  # nosec
+        "humidity": humidity,
+        "windSpeed": random.uniform(0, 100),  # nosec
+        "windDirection": random.uniform(0, 360),  # nosec
+    }
 
 
 @router.post(
-    "/draft/Weather/Current/Metric",
-    summary="draft/Weather/Current/Metric Data Product",
-    description="Current weather in metric units",
+    "/Weather/Current/Metric_v1.0",
+    summary="Current weather in a given location",
+    description="Common data points about the current weather with metric units in a "
+    "given location. Simplified for example use, and not following industry standards.",
     response_model=CurrentWeatherMetricResponse,
 )
 async def weather_current_metric(params: CurrentWeatherMetricRequest):
-
-    result = await get_current_weather(params.lat, params.lon)
-
-    logger.info("Weather for %.2f, %.2f: %s", params.lat, params.lon, result)
-
-    # https://openweathermap.org/weather-conditions
-    main = result["weather"][0]["main"].lower()
-    rain = "rain" in main or "drizzle" in main or "sleet" in main
-
-    # https://openweathermap.org/current#current_JSON
-    return CurrentWeatherMetricResponse(
-        rain=rain,
-        temp=result["main"]["temp"] - 273.15,  # Kelvin to Celsius
-        pressure=result["main"]["pressure"],
-        humidity=result["main"]["humidity"],
-        wind_speed=result["wind"]["speed"],
-        wind_direction=result["wind"]["deg"],
-    )
+    return get_weather_for_coords(params.lat, params.lon)

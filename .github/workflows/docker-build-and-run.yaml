@@ -1,0 +1,59 @@
+name: Build and Run Docker Image
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, edited]
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update
+            sudo apt-get install jq
+          fi
+
+      - name: Build Docker Image
+        run: docker build -t example-productizer .
+
+      - name: Run Docker Container
+        run: docker run -p 8000:8000 --rm -d example-productizer
+
+      - name: Wait for Container to Start
+        run: sleep 10
+
+      - name: Test API
+        run: |
+          response=$(curl -i -H 'Content-Type: application/json' http://localhost:8000/Weather/Current/Metric_v1.0 -d '{"lat":60.192059, "lon":24.945831}')
+
+          status_code=$(echo "$response" | head -n 1 | awk '{print $2}')
+
+          # Extract JSON response
+          json_resp=$(echo "$response" | awk -v RS= '{last=$0} END{print last}'  | awk '/^\s*{/,/^}$/' | jq .)
+
+          # Check request status code
+          if [[ $status_code -ne 200 ]]; then
+              echo "API test failed. HTTP status code is not 200."
+              exit 1
+          fi
+
+          # Check if the response is not a valid JSON using jq
+          if ! echo "$json_resp" | jq -e . > /dev/null 2>&1; then
+            echo "API test failed. Response structure is not a valid JSON."
+            exit 1
+          fi
+
+          # Check if the response fields are present
+          if ! echo "$json_resp" | jq 'has("humidity") and has("pressure") and has ("rain") and has ("temp") and has ("windSpeed") and has ("windDirection") ' | grep -q true; then
+              echo "Error: Required fields not found in the JSON response."
+              exit 1
+          fi

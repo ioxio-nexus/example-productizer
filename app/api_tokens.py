@@ -240,8 +240,10 @@ async def validate_api_token(api_token: str, definition_path: str, source: str):
     # Build the DSI that matches this request, to check that it matches expectation
     expected_dsi = make_dsi(dataspace_base_domain, definition_path, source)
 
-    # NOTE: If building for production use, verify that this DSI is one that you have intended to publish before making
-    #       any requests.
+    # NOTE: If building for production use, you need to get the expected DSI value from the Dataspace developer portal
+    # for your data source, and verify the value above matches it exactly before continuing the processing here. If you
+    # not verify the DSI, it is feasible for a 3rd party to register your API as another data source on the Dataspace,
+    # and have the Dataspace generate valid API tokens for it, which will pass the validation logic below.
 
     # Figure out the JWK that signed this token
     jwks_url, expected_signing_jwk = await fetch_jwk(dataspace_base_domain, kid)

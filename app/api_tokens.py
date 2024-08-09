@@ -9,30 +9,26 @@ from yarl import URL
 from app.utils import get_json, logger
 from settings import API_TOKEN_LEEWAY, VALID_DATASPACES
 
+# TODO: Check if Dataspace needs capitalization and TM
+
 # Some reasonable defaults for cache lifetimes for different stages of signature validation
 #
 # For production uses it would be a good idea to periodically fetch the JWKS file instead to avoid
 # delays when data is being requested.
 
-JWK_CACHE_TTL = 15 * 60  # Cache individual JWK for 15min
+JWK_CACHE_TTL = 15 * 60  # Cache individual JWK for 15 minutes
 JWKS_CACHE_TTL = 60 * 60  # Cache entire JWKS file for 1 hour
 JWKS_URL_CACHE_TTL = 24 * 60 * 60  # Cache determining JWKS URL for 24 hours
 
 
+# TODO: dataclass -> pydantic.basemodel, remove unused keys
 @dataclass
 class DataspaceConfiguration:
-    # https://docs.ioxio.dev/schemas/dataspace-configuration/
+    """
+    Full structure documented at https://docs.ioxio.dev/schemas/dataspace-configuration/
+    """
 
-    authentication_providers: dict
-    consent_providers: list[dict]
-    dataspace_base_domain: str
-    dataspace_name: str
-    definition_viewer_url: str
-    definitions: dict
-    developer_portal_url: str
-    docs_url: str
-    jwks_uri: str  # TODO: This will be renamed _url
-    product_gateway_url: str
+    jwks_url: str
 
 
 @dataclass
@@ -78,12 +74,12 @@ class APIToken:
 
 
 @alru_cache(maxsize=16, ttl=JWKS_URL_CACHE_TTL)
-async def determine_jwks_url(iss: str) -> str:
+async def determine_jwks_url(dataspace_base_domain: str) -> str:
     """
-    Fetch the issuer's dataspace configuration and determine the JWKS URL. We only support HTTPS schemes, which
-    simplifies this a bit.
+    Fetch the Dataspace configuration and determine the JWKS URL. We only support HTTPS schemes, which simplifies this a
+    bit.
 
-    :param iss: The base domain of the issuer
+    :param dataspace_base_domain: The base domain of the Dataspace
     :return: The JWKS URL from the dataspace configuration
     :raises httpx.HTTPError: If the response from the server is not a successful one
     """
@@ -92,7 +88,7 @@ async def determine_jwks_url(iss: str) -> str:
     dataspace_configuration_url = str(
         URL.build(
             scheme="https",
-            host=iss,
+            host=dataspace_base_domain,
             path="/.well-known/dataspace/dataspace-configuration.json",
         )
     )
@@ -105,16 +101,16 @@ async def determine_jwks_url(iss: str) -> str:
 
 
 @alru_cache(maxsize=16, ttl=JWKS_CACHE_TTL)
-async def fetch_jwks(iss: str) -> (str, list[JWKResult]):
+async def fetch_jwks(dataspace_base_domain: str) -> (str, list[JWKResult]):
     """
-    Figure out the issuer's JWKS URL and fetch the JWKS -hosted keys.
+    Figure out the Dataspace's JWKS URL and fetch the JWKS -hosted keys.
 
-    :param iss: The base domain of the issuer
+    :param dataspace_base_domain: The base domain of the Dataspace
     :return: The JWKS URL from the dataspace configuration, and the keys hosted via JWKS
     :raises httpx.HTTPError: If the response from the server is not a successful one
     """
 
-    jwks_url = await determine_jwks_url(iss)
+    jwks_url = await determine_jwks_url(dataspace_base_domain)
 
     logger.info(f"Fetching JWKS from {jwks_url}")
     result = await get_json(jwks_url)
@@ -125,18 +121,18 @@ async def fetch_jwks(iss: str) -> (str, list[JWKResult]):
 
 
 @alru_cache(maxsize=16, ttl=JWK_CACHE_TTL)
-async def fetch_jwk(iss: str, kid: str) -> (str, PyJWK):
+async def fetch_jwk(dataspace_base_domain: str, kid: str) -> (str, PyJWK):
     """
-    Fetch the JWK key 'kid' from the issuer's published JWKS. We also require it to be of type RSA, used for signing,
+    Fetch the JWK key 'kid' from the Dataspace's published JWKS. We also require it to be of type RSA, used for signing,
     and using RS256 algorithm.
 
-    :param iss: Base domain of issuer, e.g. ioxio.com
+    :param dataspace_base_domain: Base domain of the Dataspace, e.g. sandbox.ioxio-dataspace.com
     :param kid: Key ID in the JWKS, e.g. 302feac8851574f3ef74ec1c62a7489f
     :return: The JWKS URL the key was fetched from, as well as a PyJWK instance for the key
     :raises httpx.HTTPError: If the response from the server is not a successful one
     :raises Exception: If the key was not found
     """
-    jwks_url, jwks = await fetch_jwks(iss)
+    jwks_url, jwks = await fetch_jwks(dataspace_base_domain)
     for jwk in jwks:
         if (
             jwk.kty == "RSA"
@@ -174,10 +170,10 @@ def get_kid(api_token) -> str:
 
 def get_iss(api_token) -> str:
     """
-    Parse the JWK issuer from the API token
+    Parse the JWK issuer from the API token. The issuer is the Dataspace this API token is for.
 
     :param api_token: The JWT formatted API token
-    :return: Issuer who created this JWT token
+    :return: Issuer who created this JWT token, which is the Dataspace base URL incl. protocol
     :raises Exception: In case it was not possible to determine the issuer
     """
     payload = jwt.decode(api_token, options={"verify_signature": False})
@@ -192,24 +188,29 @@ def get_iss(api_token) -> str:
 def make_dsi(dataspace_base_domain: str, definition_path: str, source: str) -> str:
     """
     Construct a Data Source Identifier from the information on the request and token
+
+    DSIs are URIs in the format: dpp://<source>@<dataspace_base_domain>/<data_definition>
     """
 
-    # Data sources are identified on dataspaces as <group> or <group>:<variant>, which on the DSI URI correspond to a
+    # Data sources are identified on Dataspaces as <group> or <group>:<variant>, which on the DSI URI correspond to a
     # "user" and an optional "password"
     user, _, password = source.partition(":")  # Extract group:source to URL properties
 
-    # Only add password property if it has a value, so we don't end up with an empty `:`
-    extra = {}
-    if password:
-        extra["password"] = password
+    if not password:
+        # Passing the value None will not append it to the URL, whereas an empty string would be
+        password = None
 
     # Use an URL builder to build the URI correctly
+    #
+    # Our expectation is that all the values are suitable for doing this with just string concatenation, however for
+    # future proofing we want to do this a bit more carefully here.
+
     dsi_url = URL.build(
         scheme="dpp",
         host=dataspace_base_domain,
         path=definition_path,
         user=user,
-        **extra,
+        password=password,
     )
 
     return str(dsi_url)
@@ -249,12 +250,19 @@ async def validate_api_token(api_token: str, definition_path: str, source: str):
     jwks_url, expected_signing_jwk = await fetch_jwk(dataspace_base_domain, kid)
 
     # This verifies signature and expiration time, then returns the payload
-    jwt_payload = jwt.decode(
-        jwt=api_token,
-        leeway=API_TOKEN_LEEWAY,
-        key=expected_signing_jwk.key,
-        algorithms=["RS256"],
-    )
+    try:
+        jwt_payload = jwt.decode(
+            jwt=api_token,
+            leeway=API_TOKEN_LEEWAY,
+            key=expected_signing_jwk.key,
+            algorithms=["RS256"],
+        )
+    except jwt.exceptions.InvalidSignatureError as e:
+        # TODO: Test if this works
+        raise Exception(
+            f"API Token signature cannot be verified with the key {kid} fetched from {jwks_url}"
+        ) from e
+
     api_token = APIToken(**jwt_payload)
 
     if api_token.dsi != expected_dsi:

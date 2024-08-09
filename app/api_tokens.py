@@ -1,29 +1,26 @@
-from dataclasses import dataclass
 from typing import Optional
 
 import jwt
 from async_lru import alru_cache
 from jwt import PyJWK
+from pydantic import BaseModel, Field
 from yarl import URL
 
 from app.utils import get_json, logger
 from settings import API_TOKEN_LEEWAY, VALID_DATASPACES
-
-# TODO: Check if Dataspace needs capitalization and TM
 
 # Some reasonable defaults for cache lifetimes for different stages of signature validation
 #
 # For production uses it would be a good idea to periodically fetch the JWKS file instead to avoid
 # delays when data is being requested.
 
+
 JWK_CACHE_TTL = 15 * 60  # Cache individual JWK for 15 minutes
 JWKS_CACHE_TTL = 60 * 60  # Cache entire JWKS file for 1 hour
 JWKS_URL_CACHE_TTL = 24 * 60 * 60  # Cache determining JWKS URL for 24 hours
 
 
-# TODO: dataclass -> pydantic.basemodel, remove unused keys
-@dataclass
-class DataspaceConfiguration:
+class DataspaceConfiguration(BaseModel):
     """
     Full structure documented at https://docs.ioxio.dev/schemas/dataspace-configuration/
     """
@@ -31,8 +28,7 @@ class DataspaceConfiguration:
     jwks_url: str
 
 
-@dataclass
-class JWKResult:
+class JWKResult(BaseModel):
     """
     A container for a single JSON Web Key
 
@@ -49,11 +45,10 @@ class JWKResult:
     x5c: Optional[str] = None
     x5t: Optional[str] = None
     x5u: Optional[str] = None
-    # x5t#S256 is an option, but it's not trivial to support here so leaving it out for now
+    x5t_S256: Optional[str] = Field(None, alias="x5t#S256")
 
 
-@dataclass
-class JWKSResult:
+class JWKSResult(BaseModel):
     """
     Container for a jwks.json -file's contents
 
@@ -63,8 +58,7 @@ class JWKSResult:
     keys: list[JWKResult]
 
 
-@dataclass
-class APIToken:
+class APIToken(BaseModel):
     # TODO: Link to IOXIO docs describing the token format
     iss: str  # Issuer base domain
     sub: str  # Group or app identification
@@ -76,10 +70,10 @@ class APIToken:
 @alru_cache(maxsize=16, ttl=JWKS_URL_CACHE_TTL)
 async def determine_jwks_url(dataspace_base_domain: str) -> str:
     """
-    Fetch the Dataspace configuration and determine the JWKS URL. We only support HTTPS schemes, which simplifies this a
+    Fetch the dataspace configuration and determine the JWKS URL. We only support HTTPS schemes, which simplifies this a
     bit.
 
-    :param dataspace_base_domain: The base domain of the Dataspace
+    :param dataspace_base_domain: The base domain of the dataspace
     :return: The JWKS URL from the dataspace configuration
     :raises httpx.HTTPError: If the response from the server is not a successful one
     """
@@ -103,9 +97,9 @@ async def determine_jwks_url(dataspace_base_domain: str) -> str:
 @alru_cache(maxsize=16, ttl=JWKS_CACHE_TTL)
 async def fetch_jwks(dataspace_base_domain: str) -> (str, list[JWKResult]):
     """
-    Figure out the Dataspace's JWKS URL and fetch the JWKS -hosted keys.
+    Figure out the dataspace's JWKS URL and fetch the JWKS -hosted keys.
 
-    :param dataspace_base_domain: The base domain of the Dataspace
+    :param dataspace_base_domain: The base domain of the dataspace
     :return: The JWKS URL from the dataspace configuration, and the keys hosted via JWKS
     :raises httpx.HTTPError: If the response from the server is not a successful one
     """
@@ -123,10 +117,10 @@ async def fetch_jwks(dataspace_base_domain: str) -> (str, list[JWKResult]):
 @alru_cache(maxsize=16, ttl=JWK_CACHE_TTL)
 async def fetch_jwk(dataspace_base_domain: str, kid: str) -> (str, PyJWK):
     """
-    Fetch the JWK key 'kid' from the Dataspace's published JWKS. We also require it to be of type RSA, used for signing,
+    Fetch the JWK key 'kid' from the dataspace's published JWKS. We also require it to be of type RSA, used for signing,
     and using RS256 algorithm.
 
-    :param dataspace_base_domain: Base domain of the Dataspace, e.g. sandbox.ioxio-dataspace.com
+    :param dataspace_base_domain: Base domain of the dataspace, e.g. sandbox.ioxio-dataspace.com
     :param kid: Key ID in the JWKS, e.g. 302feac8851574f3ef74ec1c62a7489f
     :return: The JWKS URL the key was fetched from, as well as a PyJWK instance for the key
     :raises httpx.HTTPError: If the response from the server is not a successful one
@@ -140,7 +134,7 @@ async def fetch_jwk(dataspace_base_domain: str, kid: str) -> (str, PyJWK):
             and jwk.alg == "RS256"
             and jwk.kid == kid
         ):
-            return jwks_url, PyJWK(jwk.__dict__)
+            return jwks_url, PyJWK(jwk.dict(by_alias=True))
 
     # For proper durable operation, in case the JWKS content was fetched from cache and key was not found, we should
     # try to re-fetch fresh JWKS in case it is a newly added key.
@@ -170,10 +164,10 @@ def get_kid(api_token) -> str:
 
 def get_iss(api_token) -> str:
     """
-    Parse the JWK issuer from the API token. The issuer is the Dataspace this API token is for.
+    Parse the JWK issuer from the API token. The issuer is the dataspace this API token is for.
 
     :param api_token: The JWT formatted API token
-    :return: Issuer who created this JWT token, which is the Dataspace base URL incl. protocol
+    :return: Issuer who created this JWT token, which is the dataspace base URL incl. protocol
     :raises Exception: In case it was not possible to determine the issuer
     """
     payload = jwt.decode(api_token, options={"verify_signature": False})
@@ -192,7 +186,7 @@ def make_dsi(dataspace_base_domain: str, definition_path: str, source: str) -> s
     DSIs are URIs in the format: dpp://<source>@<dataspace_base_domain>/<data_definition>
     """
 
-    # Data sources are identified on Dataspaces as <group> or <group>:<variant>, which on the DSI URI correspond to a
+    # Data sources are identified on dataspaces as <group> or <group>:<variant>, which on the DSI URI correspond to a
     # "user" and an optional "password"
     user, _, password = source.partition(":")  # Extract group:source to URL properties
 
@@ -241,10 +235,10 @@ async def validate_api_token(api_token: str, definition_path: str, source: str):
     # Build the DSI that matches this request, to check that it matches expectation
     expected_dsi = make_dsi(dataspace_base_domain, definition_path, source)
 
-    # NOTE: If building for production use, you need to get the expected DSI value from the Dataspace developer portal
+    # NOTE: If building for production use, you need to get the expected DSI value from the dataspace developer portal
     # for your data source, and verify the value above matches it exactly before continuing the processing here. If you
-    # not verify the DSI, it is feasible for a 3rd party to register your API as another data source on the Dataspace,
-    # and have the Dataspace generate valid API tokens for it, which will pass the validation logic below.
+    # not verify the DSI, it is feasible for a 3rd party to register your API as another data source on the dataspace,
+    # and have the dataspace generate valid API tokens for it, which will pass the validation logic below.
 
     # Figure out the JWK that signed this token
     jwks_url, expected_signing_jwk = await fetch_jwk(dataspace_base_domain, kid)

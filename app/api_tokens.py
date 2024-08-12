@@ -64,9 +64,9 @@ class JWKSResult(BaseModel):
 class APIToken(BaseModel):
     # TODO: Link to IOXIO docs describing the token format, once docs exist
 
-    iss: str  # Issuer base domain
+    iss: str  # Base URL of the dataspace that issued the API token
     sub: str  # Group or app identification
-    dsi: str  # Data source identifier for which this API token is valid
+    aud: str  # Audience, the Data Source Identifier (DSI) for which this API token is valid
     exp: int  # Expiration time (unix timestamp)
     iat: int  # Issued at (unix timestamp)
 
@@ -198,7 +198,7 @@ def make_dsi(dataspace_base_domain: str, definition_path: str, source: str) -> s
         # Passing the value None will not append it to the URL, whereas an empty string would be
         password = None
 
-    # Use an URL builder to build the URI correctly
+    # Use a URL builder to build the URI correctly
     #
     # Our expectation is that all the values are suitable for doing this with just string concatenation, however for
     # future proofing we want to do this a bit more carefully here.
@@ -241,8 +241,8 @@ async def validate_api_token(api_token: str, definition_path: str, source: str):
 
     # NOTE: If building for production use, you need to get the expected DSI value from the dataspace developer portal
     # for your data source, and verify the value above matches it exactly before continuing the processing here. If you
-    # not verify the DSI, it is feasible for a 3rd party to register your API as another data source on the dataspace,
-    # and have the dataspace generate valid API tokens for it, which will pass the validation logic below.
+    # do not verify the DSI, it is feasible for a 3rd party to register your API as another data source on the
+    # dataspace, and have the dataspace generate valid API tokens for it, which will pass the validation logic below.
 
     if VALID_DSIS:
         if expected_dsi not in VALID_DSIS:
@@ -266,9 +266,9 @@ async def validate_api_token(api_token: str, definition_path: str, source: str):
 
     api_token = APIToken(**jwt_payload)
 
-    if api_token.dsi != expected_dsi:
-        raise Exception(f"Expected DSI {expected_dsi}, got {api_token.dsi}")
+    if api_token.aud != expected_dsi:
+        raise Exception(f"Expected DSI {expected_dsi}, got {api_token.aud}")
 
     logger.info(
-        f"{api_token.sub} from {iss} accessing {api_token.dsi} with a valid API Token"
+        f"{api_token.sub} from {iss} accessing {api_token.aud} with a valid API Token"
     )

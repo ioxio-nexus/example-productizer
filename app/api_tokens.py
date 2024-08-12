@@ -262,7 +262,6 @@ async def validate_api_token(api_token: str, definition_path: str, source: str):
             algorithms=["RS256"],
         )
     except jwt.exceptions.InvalidSignatureError as e:
-        # TODO: Test if this works
         raise Exception(
             f"API Token signature cannot be verified with the key {kid} fetched from {jwks_url}"
         ) from e

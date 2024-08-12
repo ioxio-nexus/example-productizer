@@ -13,9 +13,11 @@ async def verify_api_token(
     source: Optional[str] = "",
 ):
     """
-    A FastAPI dependency that will validate the X-API-Key header if it's present, without requiring it to be present. Please note that if you plan to base your API token verification upon this code.
+    A FastAPI dependency that will validate the X-API-Key header if it's present, without requiring it to be present.
+    Please note that if you plan to base your API token verification upon this code.
 
-    :param request: The request.url.path is expected to be the data product path, if you have some other base path, make sure you trim it.
+    :param request: The request.url.path is expected to be the data product path, if you have some other base path, make
+                    sure you trim it.
     :param x_api_key: The X-API-Key header to (optionally) be verified.
     :param source: Expected as a query parameter, ?source=example
     :raises Exception: In case validation fails

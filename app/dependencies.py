@@ -17,7 +17,7 @@ async def verify_api_token(
 
     :param request: The request.url.path is expected to be the data product path, if you have some other base path, make sure you trim it.
     :param x_api_key: The X-API-Key header to (optionally) be verified.
-    :param source: Expected as a query parameter ?source=example
+    :param source: Expected as a query parameter, ?source=example
     :raises Exception: In case validation fails
     """
 

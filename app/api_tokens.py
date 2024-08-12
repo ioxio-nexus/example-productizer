@@ -91,7 +91,7 @@ async def determine_jwks_url(dataspace_base_domain: str) -> str:
     result = await get_json(dataspace_configuration_url)
 
     dataspace_configuration = DataspaceConfiguration(**result)
-    return dataspace_configuration.jwks_uri
+    return dataspace_configuration.jwks_url
 
 
 @alru_cache(maxsize=16, ttl=JWKS_CACHE_TTL)

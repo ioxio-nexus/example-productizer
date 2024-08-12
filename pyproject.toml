@@ -3,6 +3,7 @@ name = "ioxio-dataspace-example-productizer"
 version = "1.0.0"
 description = ""
 authors = ["IOXIO Oy"]
+packages = [{ include = "app", from = "." }]
 
 [tool.poetry.dependencies]
 python = "^3.11"

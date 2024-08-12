@@ -243,8 +243,6 @@ async def validate_api_token(api_token: str, definition_path: str, source: str):
     # for your data source, and verify the value above matches it exactly before continuing the processing here. If you
     # not verify the DSI, it is feasible for a 3rd party to register your API as another data source on the dataspace,
     # and have the dataspace generate valid API tokens for it, which will pass the validation logic below.
-    #
-    # See settings.py VALID_DSIS
 
     if VALID_DSIS:
         if expected_dsi not in VALID_DSIS:

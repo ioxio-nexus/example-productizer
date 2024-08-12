@@ -20,6 +20,9 @@ JWKS_CACHE_TTL = 60 * 60  # Cache entire JWKS file for 1 hour
 JWKS_URL_CACHE_TTL = 24 * 60 * 60  # Cache determining JWKS URL for 24 hours
 
 
+# NOTE: BaseModel -classes automatically discard extra properties, full contents may not be accurately described here
+
+
 class DataspaceConfiguration(BaseModel):
     """
     Full structure documented at https://docs.ioxio.dev/schemas/dataspace-configuration/
@@ -59,7 +62,8 @@ class JWKSResult(BaseModel):
 
 
 class APIToken(BaseModel):
-    # TODO: Link to IOXIO docs describing the token format
+    # TODO: Link to IOXIO docs describing the token format, once docs exist
+
     iss: str  # Issuer base domain
     sub: str  # Group or app identification
     dsi: str  # Data source identifier for which this API token is valid

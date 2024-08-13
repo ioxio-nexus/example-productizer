@@ -7,6 +7,10 @@
 Implementation of a basic Productizer for random weather data using Python and FastAPI.
 Serves as an example of how to implement a working Productizer.
 
+> Do not use this codebase in production or with production data without careful
+> understanding and consideration of the security and other consequences. This codebase
+> is not suitable as-is for sensitive data.
+
 ## Development
 
 Generic pre-requisites for development

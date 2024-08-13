@@ -3,13 +3,19 @@ name = "ioxio-dataspace-example-productizer"
 version = "1.0.0"
 description = ""
 authors = ["IOXIO Oy"]
+packages = [{ include = "app", from = "." }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-fastapi = "^0.110.0"
-uvicorn = "^0.27.1"
+fastapi = "^0.110.3"
+uvicorn = {extras = ["standard"], version = "^0.30.5"}
 invoke = "^2.2.0"
-pydantic = "^2.6.3"
+pydantic = "^2.8.2"
+yarl = "^1.9.4"
+pyjwt = "^2.9.0"
+httpx = "^0.27.0"
+cryptography = "^43.0.0"
+async-lru = "^2.0.4"
 
 [tool.skjold]
 report_only = false
@@ -18,5 +24,5 @@ sources = ["pyup", "gemnasium"]
 [tool.poetry.dev-dependencies]
 
 [build-system]
-requires = ["poetry>=1.0.0"]
-build-backend = "poetry.masonry.api"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

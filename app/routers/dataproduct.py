@@ -1,10 +1,12 @@
 import random
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from app.dependencies import verify_api_token
 from app.models import CurrentWeatherMetricRequest, CurrentWeatherMetricResponse
 
-router = APIRouter()
+# All APIs under this router verify any sent API tokens
+router = APIRouter(dependencies=[Depends(verify_api_token)])
 
 
 def get_weather_for_coords(lat: float, lon: float):

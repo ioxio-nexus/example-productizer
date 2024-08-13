@@ -1,6 +1,6 @@
 # ---- BUILD ENVIRONMENT ----- #
 
-FROM ghcr.io/ioxiocom/python-base:ubuntu22.04-python3.11 as build
+FROM ghcr.io/ioxiocom/python-base:ubuntu22.04-python3.11 AS build
 
 WORKDIR /src/productizer
 
@@ -14,7 +14,7 @@ RUN --mount=type=cache,uid=1000,gid=1000,target=/home/${USER}/.cache bash /src/d
 
 # ---- RUNTIME ENVIRONMENT ----- #
 
-FROM ghcr.io/ioxiocom/python-base:ubuntu22.04-python3.11 as runtime
+FROM ghcr.io/ioxiocom/python-base:ubuntu22.04-python3.11 AS runtime
 
 COPY --from=build ${WORKON_HOME} ${WORKON_HOME}
 

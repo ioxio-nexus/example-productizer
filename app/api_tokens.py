@@ -190,6 +190,10 @@ def make_dsi(dataspace_base_domain: str, definition_path: str, source: str) -> s
     DSIs are URIs in the format: dpp://<source>@<dataspace_base_domain>/<data_definition>
     """
 
+    # This function somewhat counterintuitively expects / -prefixed paths, so we'll just fix it for you if needed
+    if not definition_path.startswith("/"):
+        definition_path = f"/{definition_path}"
+
     # Data sources are identified on dataspaces as <group> or <group>:<variant>, which on the DSI URI correspond to a
     # "user" and an optional "password"
     user, _, password = source.partition(":")  # Extract group:source to URL properties
